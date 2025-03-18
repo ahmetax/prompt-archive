@@ -36,7 +36,7 @@ def register_template_filters(app):
         if not file_path:
             return False
         ext = get_file_extension(file_path)
-        return ext in ['jpg', 'jpeg', 'png', 'gif']
+        return ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']
     
     @app.template_filter('is_video')
     def is_video(file_path):
