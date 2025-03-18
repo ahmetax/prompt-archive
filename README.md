@@ -152,3 +152,5 @@ Bu proje MIT lisansı altında lisanslanmıştır. Daha fazla bilgi için `LICEN
 Proje sorumlusu: [Ahmet Aksoy](mailto:ahmetax@gmail.com)
 
 Proje bağlantısı: [https://github.com/ahmetax/prompt-archive](https://github.com/ahmetax/prompt-archive)
+
+Bu proje Claude 3.7 Sonnet - (https://claude.ai) ile birlikte geliştirilmiştir.
