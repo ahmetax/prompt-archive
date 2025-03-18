@@ -1,0 +1,217 @@
+/**
+ * Prompt Arşivi - Ana CSS Dosyası
+ */
+
+/* Genel Stiller */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Navbar Stilleri */
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+}
+
+.navbar .nav-link.active {
+    border-bottom: 2px solid #fff;
+}
+
+/* Kart Stilleri */
+.card {
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-footer {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Form Stilleri */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Button Stilleri */
+.btn {
+    font-weight: 500;
+    border-radius: 0.25rem;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+/* Badge Stilleri */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    border-radius: 0.25rem;
+}
+
+/* Özel Bileşen Stilleri */
+
+/* Prompt Kartları */
+.prompt-card {
+    height: 100%;
+}
+
+.prompt-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.prompt-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.prompt-card .card-footer {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Prompt Kod Kutusu */
+.prompt-box {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Başarı Puanı Yıldızları */
+.rating-stars {
+    color: #ffc107;
+}
+
+.rating-stars .far.fa-star {
+    color: #dee2e6;
+}
+
+/* Etiket Rozetleri */
+.tag-badge {
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tag-badge:hover {
+    opacity: 0.8;
+}
+
+/* Filtre Bölümü */
+.filter-section {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+
+/* İstatistik Kartları */
+.stat-card {
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card .card-title {
+    color: #6c757d;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.stat-card .display-4 {
+    color: #0d6efd;
+    font-weight: 700;
+}
+
+/* Grafik Konteynerı */
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Footer Stilleri */
+footer {
+    background-color: #343a40;
+    color: #fff;
+    padding: 2rem 0;
+}
+
+footer a {
+    color: #adb5bd;
+    transition: all 0.2s;
+}
+
+footer a:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Medya Sorguları */
+@media (max-width: 992px) {
+    .navbar .nav-link.active {
+        border-bottom: none;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+}

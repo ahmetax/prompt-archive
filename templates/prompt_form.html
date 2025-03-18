@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if prompt %}Prompt Düzenle{% else %}Yeni Prompt Ekle{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+    .rating-selector input {
+        display: none;
+    }
+    .rating-selector label {
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #ccc;
+        transition: color 0.2s;
+    }
+    .rating-selector label:hover,
+    .rating-selector label:hover ~ label,
+    .rating-selector input:checked ~ label {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                {% if prompt %}
+                    Prompt Düzenle
+                {% else %}
+                    {% if parent %}
+                        Yeni Prompt Versiyonu Oluştur
+                    {% else %}
+                        Yeni Prompt Ekle
+                    {% endif %}
+                {% endif %}
+            </h1>
+            
+            {% if parent %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>"{{ parent.description }}"</strong> promptunun bir versiyonunu oluşturuyorsunuz.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <!-- Temel Bilgiler -->
+                        <h5 class="card-title mb-3">Temel Bilgiler</h5>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Açıklama <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="description" name="description" 
+                                   value="{{ prompt.description if prompt else (parent.description + ' (Versiyon)' if parent else '') }}" 
+                                   required>
+                            <div class="form-text">Bu promptun ne için olduğuna dair kısa bir açıklama.</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="language" class="form-label">Dil <span class="text-danger">*</span></label>
+                                <select class="form-select" id="language" name="language" required>
+                                    <option value="Türkçe" {% if prompt and prompt.language == 'Türkçe' %}selected{% elif not prompt and not parent %}selected{% elif parent and parent.language == 'Türkçe' %}selected{% endif %}>Türkçe</option>
+                                    <option value="İngilizce" {% if prompt and prompt.language == 'İngilizce' %}selected{% elif parent and parent.language == 'İngilizce' %}selected{% endif %}>İngilizce</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="generator_ai" class="form-label">AI Üreteci <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="generator_ai" name="generator_ai" 
+                                       value="{{ prompt.generator_ai if prompt else (parent.generator_ai if parent else '') }}" 
+                                       list="ai-generators" required>
+                                <datalist id="ai-generators">
+                                    <!-- Metin Tabanlı Modeller -->
+                                    <option value="ChatGPT">
+                                    <option value="Claude">
+                                    <option value="Gemini">
+                                    <option value="Llama">
+                                    <option value="Mistral">
+                                    <option value="Cohere">
+                                    <option value="Bard">
+                                    <option value="PaLM">
+                                    <option value="GPT-4">
+                                    <option value="GPT-4o">
+                                    <option value="GPT-4 Turbo">
+                                    <option value="Claude 3 Opus">
+                                    <option value="Claude 3 Sonnet">
+                                    <option value="Claude 3 Haiku">
+                                    
+                                    <!-- Görsel Tabanlı Modeller -->
+                                    <option value="DALL-E 3">
+                                    <option value="DALL-E 2">
+                                    <option value="Midjourney">
+                                    <option value="Stable Diffusion">
+                                    <option value="Stable Diffusion XL">
+                                    <option value="Leonardo.ai">
+                                    <option value="Firefly">
+                                    <option value="Imagen">
+                                    <option value="Playground AI">
+                                    <option value="Bing Image Creator">
+                                    <option value="Canva AI">
+                                    <option value="Craiyon">
+                                    
+                                    <!-- Video Modelleri -->
+                                    <option value="Runway">
+                                    <option value="Pika">
+                                    <option value="Gen-2">
+                                    <option value="Sora">
+                                    <option value="Luma AI">
+                                    <option value="Synthesia">
+                                    <option value="D-ID">
+                                    <option value="HeyGen">
+                                    <option value="Kaiber">
+                                    
+                                    <!-- Ses Modelleri -->
+                                    <option value="Elevenlabs">
+                                    <option value="Murf.ai">
+                                    <option value="Play.ht">
+                                    <option value="Resemble.ai">
+                                    <option value="WellSaid Labs">
+                                    <option value="Tacotron">
+                                    <option value="Descript">
+                                    <option value="VALL-E">
+                                    <option value="AudioLM">
+                                    
+                                    <!-- Çok Modlu Modeller -->
+                                    <option value="GPT-4V">
+                                    <option value="Claude 3 Vision">
+                                    <option value="Gemini Pro Vision">
+                                    <option value="CogVLM">
+                                    <option value="LLaVA">
+                                </datalist>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="from_type" class="form-label">Kaynak Türü <span class="text-danger">*</span></label>
+                                <select class="form-select" id="from_type" name="from_type" required>
+                                    <option value="text" {% if prompt and prompt.from_type == 'text' %}selected{% elif not prompt and not parent %}selected{% elif parent and parent.from_type == 'text' %}selected{% endif %}>Text</option>
+                                    <option value="image" {% if prompt and prompt.from_type == 'image' %}selected{% elif parent and parent.from_type == 'image' %}selected{% endif %}>Image</option>
+                                    <option value="audio" {% if prompt and prompt.from_type == 'audio' %}selected{% elif parent and parent.from_type == 'audio' %}selected{% endif %}>Audio</option>
+                                    <option value="video" {% if prompt and prompt.from_type == 'video' %}selected{% elif parent and parent.from_type == 'video' %}selected{% endif %}>Video</option>
+                                    <option value="other" {% if prompt and prompt.from_type == 'other' %}selected{% elif parent and parent.from_type == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="to_type" class="form-label">Hedef Türü <span class="text-danger">*</span></label>
+                                <select class="form-select" id="to_type" name="to_type" required>
+                                    <option value="text" {% if prompt and prompt.to_type == 'text' %}selected{% elif parent and parent.to_type == 'text' %}selected{% endif %}>Text</option>
+                                    <option value="image" {% if prompt and prompt.to_type == 'image' %}selected{% elif not prompt and not parent %}selected{% elif parent and parent.to_type == 'image' %}selected{% endif %}>Image</option>
+                                    <option value="audio" {% if prompt and prompt.to_type == 'audio' %}selected{% elif parent and parent.to_type == 'audio' %}selected{% endif %}>Audio</option>
+                                    <option value="video" {% if prompt and prompt.to_type == 'video' %}selected{% elif parent and parent.to_type == 'video' %}selected{% endif %}>Video</option>
+                                    <option value="other" {% if prompt and prompt.to_type == 'other' %}selected{% elif parent and parent.to_type == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Prompt İçeriği -->
+                        <h5 class="card-title mb-3 mt-4">Prompt İçeriği</h5>
+                        
+                        <div class="mb-3">
+                            <label for="prompt" class="form-label">Prompt <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="prompt" name="prompt" rows="5" required>{{ prompt.prompt if prompt else (parent.prompt if parent else '') }}</textarea>
+                            <div class="form-text">AI'ya gönderdiğiniz tam prompt metni.</div>
+                        </div>
+                        
+                        <!-- Performans Değerlendirmesi -->
+                        <h5 class="card-title mb-3 mt-4">Performans Değerlendirmesi</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label d-block">Başarı Puanı</label>
+                            <div class="rating-selector d-flex flex-row-reverse justify-content-end">
+                                {% for i in range(5, 0, -1) %}
+                                <input type="radio" id="star{{ i }}" name="success_rating" value="{{ i }}" 
+                                       {% if prompt and prompt.success_rating == i %}checked{% endif %}>
+                                <label for="star{{ i }}"><i class="fas fa-star"></i></label>
+                                {% endfor %}
+                            </div>
+                            <div class="form-text">Bu promptun başarı derecesini değerlendirin.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="result_file" class="form-label">Sonuç Dosyası</label>
+                            <input type="file" class="form-control" id="result_file" name="result_file">
+                            <div class="form-text">AI'ın ürettiği sonucun dosyasını yükleyin (resim, video, ses, vb.).</div>
+                            
+                            {% if prompt and prompt.result_file_path %}
+                            <div class="mt-2">
+                                <p class="mb-1">Mevcut dosya:</p>
+                                {% if prompt.result_file_path|is_image %}
+                                <img src="{{ url_for('static', filename=prompt.result_file_path) }}" 
+                                     class="img-thumbnail" style="max-height: 200px;" alt="Sonuç görseli">
+                                {% elif prompt.result_file_path|is_video %}
+                                <video controls class="img-thumbnail" style="max-height: 200px;">
+                                    <source src="{{ url_for('static', filename=prompt.result_file_path) }}" type="video/mp4">
+                                    Tarayıcınız video elementini desteklemiyor.
+                                </video>
+                                {% elif prompt.result_file_path|is_audio %}
+                                <audio controls class="w-100">
+                                    <source src="{{ url_for('static', filename=prompt.result_file_path) }}" type="audio/mpeg">
+                                    Tarayıcınız audio elementini desteklemiyor.
+                                </audio>
+                                {% else %}
+                                <a href="{{ url_for('static', filename=prompt.result_file_path) }}" 
+                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-download me-1"></i>Dosyayı İndir
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Etiketler ve Metadata -->
+                        <h5 class="card-title mb-3 mt-4">Etiketler ve Metadata</h5>
+                        
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">Etiketler</label>
+                            <input type="text" class="form-control" id="tags" name="tags" 
+                                   value="{{ prompt.tag_list if prompt else '' }}">
+                            <div class="form-text">Virgülle ayrılmış etiketler (örn: manzara, portre, minimal).</div>
+                            
+                            <div class="mt-2">
+                                <label class="form-label">Popüler Etiketler:</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for tag in tags %}
+                                    <span class="badge bg-secondary tag-badge" 
+                                          onclick="addTag('{{ tag.name }}')">
+                                        {{ tag.name }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="source" class="form-label">Kaynak</label>
+                            <input type="text" class="form-control" id="source" name="source" 
+                                   value="{{ prompt.source if prompt else '' }}">
+                            <div class="form-text">Bu promptu nereden aldığınız (örn: bir web sitesi, kendi oluşturduğunuz, vb.).</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notlar</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ prompt.notes if prompt else '' }}</textarea>
+                            <div class="form-text">Bu prompt hakkında ek notlar veya gözlemler.</div>
+                        </div>
+                        
+                        <!-- Gelişmiş Ayarlar -->
+                        <div class="accordion mt-4 mb-4" id="advancedSettingsAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingAdvanced">
+                                    <button class="accordion-button collapsed" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
+                                        <i class="fas fa-cog me-2"></i>Gelişmiş Ayarlar
+                                    </button>
+                                </h2>
+                                <div id="collapseAdvanced" class="accordion-collapse collapse" 
+                                     data-bs-parent="#advancedSettingsAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="ai_parameters" class="form-label">AI Parametreleri</label>
+                                            <textarea class="form-control" id="ai_parameters" name="ai_parameters" rows="3">{{ prompt.ai_parameters if prompt else '' }}</textarea>
+                                            <div class="form-text">JSON formatında AI parametreleri (temperature, top_p, vb.).</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="api_usage" class="form-label">API Kullanım Bilgileri</label>
+                                            <textarea class="form-control" id="api_usage" name="api_usage" rows="3">{{ prompt.api_usage if prompt else '' }}</textarea>
+                                            <div class="form-text">Token sayısı, kullanım ücreti gibi API kullanım bilgileri.</div>
+                                        </div>
+                                        
+                                        {% if parent %}
+                                        <input type="hidden" name="parent_id" value="{{ parent.id }}">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('prompt.prompt_list') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Geri Dön
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% if prompt %}Promptu Güncelle{% else %}Promptu Kaydet{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Etiket ekleme fonksiyonu
+    function addTag(tagName) {
+        const tagsInput = document.getElementById('tags');
+        const currentTags = tagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+        
+        if (!currentTags.includes(tagName)) {
+            if (currentTags.length > 0) {
+                tagsInput.value = currentTags.join(', ') + ', ' + tagName;
+            } else {
+                tagsInput.value = tagName;
+            }
+        }
+    }
+    
+    // AI türüne göre prompt önerisi alma
+    document.addEventListener('DOMContentLoaded', function() {
+        const promptInput = document.getElementById('prompt');
+        const generatorAiInput = document.getElementById('generator_ai');
+        const fromTypeInput = document.getElementById('from_type');
+        const toTypeInput = document.getElementById('to_type');
+        
+        // Prompt önerisi isteme butonu ekle
+        const btnSuggest = document.createElement('button');
+        btnSuggest.type = 'button';
+        btnSuggest.className = 'btn btn-outline-secondary btn-sm mt-2';
+        btnSuggest.innerHTML = '<i class="fas fa-lightbulb me-1"></i>Prompt Önerisi Al';
+        btnSuggest.onclick = getPromptSuggestion;
+        promptInput.parentNode.appendChild(btnSuggest);
+        
+        function getPromptSuggestion() {
+            const currentPrompt = promptInput.value.trim();
+            const generatorAi = generatorAiInput.value.trim();
+            const fromType = fromTypeInput.value;
+            const toType = toTypeInput.value;
+            
+            if (!generatorAi || !fromType || !toType) {
+                alert('Lütfen önce AI Üreteci, Kaynak Türü ve Hedef Türü alanlarını doldurun.');
+                return;
+            }
+            
+            // API'dan öneri iste
+            fetch('/api/suggest-prompt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    base_prompt: currentPrompt,
+                    generator_ai: generatorAi,
+                    from_type: fromType,
+                    to_type: toType
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.suggestion) {
+                    promptInput.value = data.suggestion;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    });
+</script>
+{% endblock %}

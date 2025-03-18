@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}İstatistikler{% endblock %}
+
+{% block styles %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-chart-bar me-2"></i>Prompt İstatistikleri
+</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Toplam Prompt</h5>
+                <p class="display-4 fw-bold" id="total-prompts">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Aktif AI Üreteci</h5>
+                <p class="display-4 fw-bold" id="total-ai-generators">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Dönüşüm Türü</h5>
+                <p class="display-4 fw-bold" id="total-conversion-types">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Etiket Sayısı</h5>
+                <p class="display-4 fw-bold" id="total-tags">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Dil Dağılımı -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-language me-2"></i>Dil Dağılımı
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="languageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Üreteci Dağılımı -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-robot me-2"></i>AI Üreteci Dağılımı
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="aiGeneratorChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dönüşüm Türleri -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>Dönüşüm Türleri
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="conversionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Başarı Puanı Ortalamaları -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-star me-2"></i>Başarı Puanı Ortalamaları
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- En Popüler Etiketler -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tags me-2"></i>En Popüler Etiketler
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="tagChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Zaman İçinde Prompt Ekleme -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Zaman İçinde Prompt Ekleme
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('İstatistik sayfası yüklendi');
+        
+        // İstatistik verilerini al
+        fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            console.log('API verileri alındı:', data);
+            
+            // Ana istatistikler
+            updateMainStats(data);
+            
+            // Dil dağılımı grafiği
+            if (data.language_counts && Object.keys(data.language_counts).length > 0) {
+                createLanguageChart(data.language_counts);
+            }
+            
+            // AI üreteci dağılımı grafiği
+            if (data.ai_counts && Object.keys(data.ai_counts).length > 0) {
+                createAIGeneratorChart(data.ai_counts);
+            }
+            
+            // Dönüşüm türleri grafiği
+            if (data.conversion_counts && Object.keys(data.conversion_counts).length > 0) {
+                createConversionChart(data.conversion_counts);
+            }
+            
+            // Başarı puanı ortalamaları grafiği
+            if (data.avg_ratings && Object.keys(data.avg_ratings).length > 0) {
+                createRatingChart(data.avg_ratings);
+            }
+            
+            // En popüler etiketler grafiği
+            if (data.popular_tags && Object.keys(data.popular_tags).length > 0) {
+                createTagChart(data.popular_tags);
+            }
+            
+            // Zaman içinde eklemeler için tüm promptları al
+            fetch('/api/prompts?per_page=1000')
+            .then(response => response.json())
+            .then(promptData => {
+                if (promptData.prompts && promptData.prompts.length > 0) {
+                    createTimelineChart(promptData.prompts);
+                }
+            })
+            .catch(error => {
+                console.error('Prompt verisi alınamadı:', error);
+            });
+        })
+        .catch(error => {
+            console.error('İstatistik API hatası:', error);
+        });
+    });
+    
+    function updateMainStats(data) {
+        try {
+            // Toplam prompt sayısı - AI sayılarının toplamı
+            let totalPrompts = 0;
+            if (data.ai_counts) {
+                totalPrompts = Object.values(data.ai_counts).reduce((acc, count) => acc + count, 0);
+            }
+            
+            // Element var mı kontrol et
+            const totalPromptsElement = document.getElementById('total-prompts');
+            if (totalPromptsElement) {
+                totalPromptsElement.textContent = totalPrompts;
+            }
+            
+            // AI üreteci sayısı
+            const totalAIElement = document.getElementById('total-ai-generators');
+            if (totalAIElement && data.ai_counts) {
+                totalAIElement.textContent = Object.keys(data.ai_counts).length;
+            }
+            
+            // Dönüşüm türü sayısı
+            const totalConvElement = document.getElementById('total-conversion-types');
+            if (totalConvElement && data.conversion_counts) {
+                totalConvElement.textContent = Object.keys(data.conversion_counts).length;
+            }
+            
+            // Etiket sayısı
+            const totalTagsElement = document.getElementById('total-tags');
+            if (totalTagsElement && data.popular_tags) {
+                totalTagsElement.textContent = Object.keys(data.popular_tags).length;
+            }
+        } catch (e) {
+            console.error('updateMainStats hatası:', e);
+        }
+    }
+    
+    function createLanguageChart(languageCounts) {
+        try {
+            const ctx = document.getElementById('languageChart');
+            if (!ctx) return;
+            
+            const labels = Object.keys(languageCounts);
+            const data = Object.values(languageCounts);
+            
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('createLanguageChart hatası:', e);
+        }
+    }
+    
+    function createAIGeneratorChart(aiCounts) {
+        try {
+            const ctx = document.getElementById('aiGeneratorChart');
+            if (!ctx) return;
+            
+            const labels = Object.keys(aiCounts);
+            const data = Object.values(aiCounts);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Promptlar',
+                        data: data,
+                        backgroundColor: '#4e73df'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('createAIGeneratorChart hatası:', e);
+        }
+    }
+    
+    function createConversionChart(conversionCounts) {
+        try {
+            const ctx = document.getElementById('conversionChart');
+            if (!ctx) return;
+            
+            const labels = Object.keys(conversionCounts);
+            const data = Object.values(conversionCounts);
+            
+            new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                            '#5a5c69', '#6610f2', '#fd7e14', '#20c997', '#6f42c1'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('createConversionChart hatası:', e);
+        }
+    }
+    
+    function createRatingChart(avgRatings) {
+        try {
+            const ctx = document.getElementById('ratingChart');
+            if (!ctx) return;
+            
+            const labels = Object.keys(avgRatings);
+            const data = Object.values(avgRatings);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ortalama Puan',
+                        data: data,
+                        backgroundColor: '#f6c23e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('createRatingChart hatası:', e);
+        }
+    }
+    
+    function createTagChart(popularTags) {
+        try {
+            const ctx = document.getElementById('tagChart');
+            if (!ctx) return;
+            
+            const labels = Object.keys(popularTags);
+            const data = Object.values(popularTags);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Kullanım Sayısı',
+                        data: data,
+                        backgroundColor: '#1cc88a'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('createTagChart hatası:', e);
+        }
+    }
+    
+    function createTimelineChart(prompts) {
+        try {
+            // Ay bazında grupla
+            const monthCounts = {};
+            
+            prompts.forEach(prompt => {
+                const date = new Date(prompt.date);
+                const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                
+                if (!monthCounts[monthYear]) {
+                    monthCounts[monthYear] = 0;
+                }
+                
+                monthCounts[monthYear]++;
+            });
+            
+            // Sırala
+            const sortedMonths = Object.keys(monthCounts).sort();
+            const data = sortedMonths.map(month => monthCounts[month]);
+            
+            // Görüntülenebilir etiketler oluştur
+            const labels = sortedMonths.map(month => {
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+                return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+            });
+            
+            const ctx = document.getElementById('timelineChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Eklenen Promptlar',
+                        data: data,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('createTimelineChart hatası:', e);
+        }
+    }
+</script>
+{% endblock %}

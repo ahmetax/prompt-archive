@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Prompt Listesi{% endblock %}
+
+{% block styles %}
+<style>
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    .tag-badge {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tag-badge:hover {
+        opacity: 0.8;
+    }
+    .success-rating {
+        width: 100px;
+    }
+    .prompt-card {
+        transition: transform 0.2s;
+    }
+    .prompt-card:hover {
+        transform: translateY(-5px);
+    }
+    .rating-stars {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Prompt Listesi</h1>
+    <a href="{{ url_for('prompt.prompt_new') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Yeni Prompt Ekle
+    </a>
+</div>
+
+<div class="row">
+    <!-- Filtreler -->
+    <div class="col-md-3 mb-4">
+        <div class="filter-section p-3 mb-4">
+            <h5 class="mb-3">
+                <i class="fas fa-filter me-2"></i>Filtreler
+                {% if filters or tag_filter or search_term %}
+                <a href="{{ url_for('prompt.prompt_list') }}" class="btn btn-sm btn-outline-secondary float-end">
+                    <i class="fas fa-times me-1"></i>Temizle
+                </a>
+                {% endif %}
+            </h5>
+            <form action="{{ url_for('prompt.prompt_list') }}" method="get" id="filter-form">
+                <!-- Arama kutusu -->
+                <div class="mb-3">
+                    <label for="search" class="form-label">Ara:</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search_term }}" placeholder="Prompt ara...">
+                </div>
+                
+                <!-- Dil filtresi -->
+                <div class="mb-3">
+                    <label class="form-label">Dil:</label>
+                    {% for language in filter_options.language %}
+                    <div class="form-check">
+                        <input class="form-check-input filter-checkbox" type="checkbox" 
+                               name="language" value="{{ language[0] }}" id="lang-{{ language[0] }}"
+                               {% if filters.language and language[0] in filters.language %}checked{% endif %}>
+                        <label class="form-check-label" for="lang-{{ language[0] }}">
+                            {{ language[0] }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- AI üreteci filtresi -->
+                <div class="mb-3">
+                    <label class="form-label">AI Üreteci:</label>
+                    {% for ai in filter_options.generator_ai %}
+                    <div class="form-check">
+                        <input class="form-check-input filter-checkbox" type="checkbox" 
+                               name="generator_ai" value="{{ ai[0] }}" id="ai-{{ ai[0]|replace(' ', '-') }}"
+                               {% if filters.generator_ai and ai[0] in filters.generator_ai %}checked{% endif %}>
+                        <label class="form-check-label" for="ai-{{ ai[0]|replace(' ', '-') }}">
+                            {{ ai[0] }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Dönüşüm türü filtreleri -->
+                <div class="mb-3">
+                    <label class="form-label">Kaynak Türü:</label>
+                    {% for from_type in filter_options.from_type %}
+                    <div class="form-check">
+                        <input class="form-check-input filter-checkbox" type="checkbox" 
+                               name="from_type" value="{{ from_type[0] }}" id="from-{{ from_type[0] }}"
+                               {% if filters.from_type and from_type[0] in filters.from_type %}checked{% endif %}>
+                        <label class="form-check-label" for="from-{{ from_type[0] }}">
+                            {{ from_type[0] }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Hedef Türü:</label>
+                    {% for to_type in filter_options.to_type %}
+                    <div class="form-check">
+                        <input class="form-check-input filter-checkbox" type="checkbox" 
+                               name="to_type" value="{{ to_type[0] }}" id="to-{{ to_type[0] }}"
+                               {% if filters.to_type and to_type[0] in filters.to_type %}checked{% endif %}>
+                        <label class="form-check-label" for="to-{{ to_type[0] }}">
+                            {{ to_type[0] }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Etiket filtresi -->
+                <div class="mb-3">
+                    <label class="form-label">Etiketler:</label>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        {% for tag in filter_options.tags %}
+                        <span class="badge bg-secondary tag-badge"
+                              onclick="toggleTagFilter('{{ tag.name }}')">
+                            {{ tag.name }}
+                            {% if tag_filter and tag.name in tag_filter %}
+                            <i class="fas fa-check ms-1"></i>
+                            {% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <div id="tag-filters">
+                        {% for tag_name in tag_filter %}
+                        <input type="hidden" name="tag" value="{{ tag_name }}">
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Sıralama -->
+                <div class="mb-3">
+                    <label class="form-label">Sırala:</label>
+                    <div class="d-flex">
+                        <select class="form-select me-2" name="sort_by" id="sort-by">
+                            <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Tarih</option>
+                            <option value="description" {% if sort_by == 'description' %}selected{% endif %}>Açıklama</option>
+                            <option value="generator_ai" {% if sort_by == 'generator_ai' %}selected{% endif %}>AI Üreteci</option>
+                            <option value="success_rating" {% if sort_by == 'success_rating' %}selected{% endif %}>Başarı Puanı</option>
+                        </select>
+                        <select class="form-select" name="sort_order" id="sort-order">
+                            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Azalan</option>
+                            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Artan</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Filtrele
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Prompt listesi -->
+    <div class="col-md-9">
+        {% if prompts.items %}
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                {% for prompt in prompts.items %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm prompt-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">{{ prompt.from_type }} &rarr; {{ prompt.to_type }}</span>
+                            <small class="text-muted">{{ prompt.date|format_date }}</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">{{ prompt.description|truncate_text(50) }}</h5>
+                            
+                            <!-- Başarı puanı -->
+                            <div class="mb-3">
+                                <span class="text-muted me-2">Başarı:</span>
+                                <span class="rating-stars">
+                                    {% for i in range(5) %}
+                                        {% if i < prompt.success_rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            
+                            <!-- Prompt içeriği -->
+                            <div class="card-text mb-3">
+                                <p class="text-muted mb-1">Prompt:</p>
+                                <div class="p-2 bg-light rounded">
+                                    {{ prompt.prompt|truncate_text(100) }}
+                                </div>
+                            </div>
+                            
+                            <!-- Etiketler -->
+                            {% if prompt.tags %}
+                            <div class="mb-3">
+                                {% for tag in prompt.tags %}
+                                <a href="{{ url_for('prompt.prompt_list', tag=tag.name) }}" 
+                                   class="badge bg-secondary text-decoration-none me-1">
+                                    {{ tag.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- AI üreteci -->
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <strong>AI:</strong> {{ prompt.generator_ai }}
+                                </small>
+                            </p>
+                            
+                            <!-- Sonuç görseli (varsa) -->
+                            {% if prompt.result_file_path and prompt.result_file_path|is_image %}
+                            <div class="text-center mb-3">
+                                <img src="{{ url_for('static', filename=prompt.result_file_path) }}" 
+                                     class="img-thumbnail" alt="Sonuç görseli"
+                                     style="max-height: 150px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('prompt.prompt_detail', id=prompt.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye me-1"></i>Detaylar
+                            </a>
+                            <a href="{{ url_for('prompt.prompt_edit', id=prompt.id) }}" 
+                               class="btn btn-sm btn-outline-secondary ms-1">
+                                <i class="fas fa-edit me-1"></i>Düzenle
+                            </a>
+                            <a href="{{ url_for('prompt.prompt_new', parent_id=prompt.id) }}" 
+                               class="btn btn-sm btn-outline-info ms-1">
+                                <i class="fas fa-code-branch me-1"></i>Versiyon
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Sayfalama (Son Düzeltme) -->
+            {% if prompts.pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if prompts.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('prompt.prompt_list', page=prompts.prev_num, search=search_term, sort_by=sort_by, sort_order=sort_order) }}">
+                            &laquo; Önceki
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo; Önceki</span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in prompts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == prompts.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('prompt.prompt_list', page=page_num, search=search_term, sort_by=sort_by, sort_order=sort_order) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if prompts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('prompt.prompt_list', page=prompts.next_num, search=search_term, sort_by=sort_by, sort_order=sort_order) }}">
+                            Sonraki &raquo;
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Sonraki &raquo;</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Filtrelere uygun prompt bulunamadı. Lütfen filtreleri değiştirin veya 
+                <a href="{{ url_for('prompt.prompt_new') }}">yeni bir prompt ekleyin</a>.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filtreleme için JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Checkbox'lar değiştiğinde formu otomatik gönder
+        const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+        filterCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                document.getElementById('filter-form').submit();
+            });
+        });
+        
+        // Sıralama değiştiğinde formu otomatik gönder
+        document.getElementById('sort-by').addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+        
+        document.getElementById('sort-order').addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    });
+    
+    // Etiket filtresi ekle/çıkar
+    function toggleTagFilter(tagName) {
+        const tagFilters = document.getElementById('tag-filters');
+        const existingInputs = tagFilters.querySelectorAll('input[value="' + tagName + '"]');
+        
+        if (existingInputs.length > 0) {
+            // Etiket zaten filtrede, çıkar
+            existingInputs.forEach(input => input.remove());
+        } else {
+            // Etiket filtrede yok, ekle
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'tag';
+            input.value = tagName;
+            tagFilters.appendChild(input);
+        }
+        
+        document.getElementById('filter-form').submit();
+    }
+</script>
+{% endblock %}

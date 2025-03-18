@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Prompt Arşivi{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="{{ url_for('prompt.index') }}">
+                    <i class="fas fa-brain me-2"></i>Prompt Arşivi
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == url_for('prompt.index') %}active{% endif %}" 
+                               href="{{ url_for('prompt.index') }}">
+                                <i class="fas fa-home me-1"></i>Ana Sayfa
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == url_for('prompt.prompt_list') %}active{% endif %}" 
+                               href="{{ url_for('prompt.prompt_list') }}">
+                                <i class="fas fa-list me-1"></i>Promptlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == url_for('prompt.prompt_new') %}active{% endif %}" 
+                               href="{{ url_for('prompt.prompt_new') }}">
+                                <i class="fas fa-plus me-1"></i>Yeni Prompt Ekle
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == url_for('prompt.statistics') %}active{% endif %}" 
+                               href="{{ url_for('prompt.statistics') }}">
+                                <i class="fas fa-chart-bar me-1"></i>İstatistikler
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="{{ url_for('api.get_prompts') }}" class="btn btn-outline-light" target="_blank">
+                            <i class="fas fa-code me-1"></i>API
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container my-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Prompt Arşivi</h5>
+                    <p>Yapay zeka dönüşüm araçları için kapsamlı prompt arşivi ve test platformu.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Bağlantılar</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('prompt.index') }}" class="text-white">Ana Sayfa</a></li>
+                        <li><a href="{{ url_for('prompt.prompt_list') }}" class="text-white">Promptlar</a></li>
+                        <li><a href="{{ url_for('prompt.statistics') }}" class="text-white">İstatistikler</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>API</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('api.get_prompts') }}" class="text-white">Promptlar</a></li>
+                        <li><a href="{{ url_for('api.get_tags') }}" class="text-white">Etiketler</a></li>
+                        <li><a href="{{ url_for('api.get_stats') }}" class="text-white">İstatistikler</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="mt-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 Prompt Arşivi. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ChartJS for statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

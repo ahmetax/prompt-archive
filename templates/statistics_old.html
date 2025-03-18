@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}İstatistikler{% endblock %}
+
+{% block styles %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-chart-bar me-2"></i>Prompt İstatistikleri
+</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-robot me-2"></i>AI Üreteci Dağılımı
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="aiGeneratorChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dönüşüm Türleri -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>Dönüşüm Türleri
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="conversionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Başarı Puanı Ortalamaları -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-star me-2"></i>Başarı Puanı Ortalamaları
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- En Popüler Etiketler -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tags me-2"></i>En Popüler Etiketler
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="tagChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Zaman İçinde Prompt Ekleme -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Zaman İçinde Prompt Ekleme
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // İstatistik verilerini al
+        fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            // Ana istatistikler
+            updateMainStats(data);
+            
+            // Dil dağılımı grafiği
+            createLanguageChart(data.language_counts);
+            
+            // AI üreteci dağılımı grafiği
+            createAIGeneratorChart(data.ai_counts);
+            
+            // Dönüşüm türleri grafiği
+            createConversionChart(data.conversion_counts);
+            
+            // Başarı puanı ortalamaları grafiği
+            createRatingChart(data.avg_ratings);
+            
+            // En popüler etiketler grafiği
+            createTagChart(data.popular_tags);
+            
+            // Zaman içinde eklemeler için tüm promptları al
+            fetch('/api/prompts?per_page=1000')
+            .then(response => response.json())
+            .then(promptData => {
+                createTimelineChart(promptData.prompts);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+    
+    function updateMainStats(data) {
+        // Toplam prompt sayısı
+        const totalPrompts = Object.values(data.ai_counts).reduce((acc, count) => acc + count, 0);
+        document.getElementById('total-prompts').textContent = totalPrompts;
+        
+        // AI üreteci sayısı
+        document.getElementById('total-ai-generators').textContent = Object.keys(data.ai_counts).length;
+        
+        // Dönüşüm türü sayısı
+        document.getElementById('total-conversion-types').textContent = Object.keys(data.conversion_counts).length;
+        
+        // Etiket sayısı
+        document.getElementById('total-tags').textContent = Object.keys(data.popular_tags).length;
+    }
+    
+    function createLanguageChart(languageCounts) {
+        const ctx = document.getElementById('languageChart').getContext('2d');
+        
+        const labels = Object.keys(languageCounts);
+        const data = Object.values(languageCounts);
+        
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+    
+    function createAIGeneratorChart(aiCounts) {
+        const ctx = document.getElementById('aiGeneratorChart').getContext('2d');
+        
+        const labels = Object.keys(aiCounts);
+        const data = Object.values(aiCounts);
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Promptlar',
+                    data: data,
+                    backgroundColor: '#4e73df'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createConversionChart(conversionCounts) {
+        const ctx = document.getElementById('conversionChart').getContext('2d');
+        
+        const labels = Object.keys(conversionCounts);
+        const data = Object.values(conversionCounts);
+        
+        new Chart(ctx, {
+            type: 'polarArea',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                        '#5a5c69', '#6610f2', '#fd7e14', '#20c997', '#6f42c1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+    
+    function createRatingChart(avgRatings) {
+        const ctx = document.getElementById('ratingChart').getContext('2d');
+        
+        const labels = Object.keys(avgRatings);
+        const data = Object.values(avgRatings);
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ortalama Puan',
+                    data: data,
+                    backgroundColor: '#f6c23e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createTagChart(popularTags) {
+        const ctx = document.getElementById('tagChart').getContext('2d');
+        
+        const labels = Object.keys(popularTags);
+        const data = Object.values(popularTags);
+        
+        new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Kullanım Sayısı',
+                    data: data,
+                    backgroundColor: '#1cc88a'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createTimelineChart(prompts) {
+        // Ay bazında grupla
+        const monthCounts = {};
+        
+        prompts.forEach(prompt => {
+            const date = new Date(prompt.date);
+            const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            if (!monthCounts[monthYear]) {
+                monthCounts[monthYear] = 0;
+            }
+            
+            monthCounts[monthYear]++;
+        });
+        
+        // Sırala
+        const sortedMonths = Object.keys(monthCounts).sort();
+        const data = sortedMonths.map(month => monthCounts[month]);
+        
+        // Görüntülenebilir etiketler oluştur
+        const labels = sortedMonths.map(month => {
+            const [year, monthNum] = month.split('-');
+            const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+            return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+        });
+        
+        const ctx = document.getElementById('timelineChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Eklenen Promptlar',
+                    data: data,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}="card-body text-center">
+                <h5 class="card-title">Toplam Prompt</h5>
+                <p class="display-4 fw-bold" id="total-prompts">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Aktif AI Üreteci</h5>
+                <p class="display-4 fw-bold" id="total-ai-generators">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Dönüşüm Türü</h5>
+                <p class="display-4 fw-bold" id="total-conversion-types">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Etiket Sayısı</h5>
+                <p class="display-4 fw-bold" id="total-tags">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Dil Dağılımı -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-language me-2"></i>Dil Dağılımı
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="languageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Üreteci Dağılımı -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class

@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}{{ prompt.description }}{% endblock %}
+
+{% block styles %}
+<style>
+    .rating-stars {
+        color: #ffc107;
+    }
+    .prompt-box {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+    .tag-badge {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .metadata-row {
+        border-bottom: 1px solid #dee2e6;
+        padding: 0.5rem 0;
+    }
+    .metadata-row:last-child {
+        border-bottom: none;
+    }
+    .tab-content {
+        padding: 1rem;
+    }
+    .action-button {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .version-card {
+        transition: transform 0.2s;
+    }
+    .version-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('prompt.index') }}">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('prompt.prompt_list') }}">Promptlar</a></li>
+                    <li class="breadcrumb-item active">{{ prompt.description|truncate_text(30) }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>{{ prompt.description }}</h1>
+                
+                <div class="d-flex">
+                    <a href="{{ url_for('prompt.prompt_edit', id=prompt.id) }}" class="btn btn-primary action-button">
+                        <i class="fas fa-edit me-1"></i>Düzenle
+                    </a>
+                    <a href="{{ url_for('prompt.prompt_new', parent_id=prompt.id) }}" class="btn btn-outline-primary action-button">
+                        <i class="fas fa-code-branch me-1"></i>Versiyon Oluştur
+                    </a>
+                    <button type="button" class="btn btn-outline-danger action-button" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash-alt me-1"></i>Sil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Başlık ve Meta Bilgiler -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="prompt-tab" data-bs-toggle="tab" data-bs-target="#prompt-content" 
+                                    type="button" role="tab" aria-selected="true">
+                                <i class="fas fa-file-alt me-1"></i>Prompt
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="metadata-tab" data-bs-toggle="tab" data-bs-target="#metadata-content" 
+                                    type="button" role="tab" aria-selected="false">
+                                <i class="fas fa-info-circle me-1"></i>Meta Bilgiler
+                            </button>
+                        </li>
+                        {% if prompt.ai_parameters or prompt.api_usage %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-content" 
+                                    type="button" role="tab" aria-selected="false">
+                                <i class="fas fa-cog me-1"></i>Gelişmiş
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Prompt İçeriği -->
+                        <div class="tab-pane fade show active" id="prompt-content" role="tabpanel">
+                            <h5 class="card-title">Prompt İçeriği</h5>
+                            <div class="prompt-box">{{ prompt.prompt }}</div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ prompt.prompt|replace("'", "\\'") }}')">
+                                    <i class="fas fa-copy me-1"></i>Kopyala
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Meta Bilgiler -->
+                        <div class="tab-pane fade" id="metadata-content" role="tabpanel">
+                            <h5 class="card-title mb-3">Meta Bilgiler</h5>
+                            
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">Oluşturulma Tarihi</div>
+                                <div class="col-md-8">{{ prompt.date|format_date }}</div>
+                            </div>
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">Dil</div>
+                                <div class="col-md-8">{{ prompt.language }}</div>
+                            </div>
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">AI Üreteci</div>
+                                <div class="col-md-8">{{ prompt.generator_ai }}</div>
+                            </div>
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">Dönüşüm Türü</div>
+                                <div class="col-md-8">{{ prompt.from_type }} → {{ prompt.to_type }}</div>
+                            </div>
+                            {% if prompt.source %}
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">Kaynak</div>
+                                <div class="col-md-8">{{ prompt.source }}</div>
+                            </div>
+                            {% endif %}
+                            {% if prompt.tags %}
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">Etiketler</div>
+                                <div class="col-md-8">
+                                    {% for tag in prompt.tags %}
+                                    <a href="{{ url_for('prompt.prompt_list', tag=tag.name) }}" 
+                                       class="badge bg-secondary text-decoration-none tag-badge">
+                                        {{ tag.name }}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="row metadata-row">
+                                <div class="col-md-4 fw-bold">Başarı Puanı</div>
+                                <div class="col-md-8">
+                                    <span class="rating-stars">
+                                        {% for i in range(5) %}
+                                            {% if i < prompt.success_rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gelişmiş Bilgiler -->
+                        {% if prompt.ai_parameters or prompt.api_usage %}
+                        <div class="tab-pane fade" id="advanced-content" role="tabpanel">
+                            <h5 class="card-title">Gelişmiş Bilgiler</h5>
+                            
+                            {% if prompt.ai_parameters %}
+                            <div class="mb-3">
+                                <h6>AI Parametreleri</h6>
+                                <div class="prompt-box">{{ prompt.ai_parameters }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if prompt.api_usage %}
+                            <div class="mb-3">
+                                <h6>API Kullanım Bilgileri</h6>
+                                <div class="prompt-box">{{ prompt.api_usage }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notlar -->
+            {% if prompt.notes %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sticky-note me-2"></i>Notlar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ prompt.notes|replace('\n', '<br>')|safe }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Versiyonlar -->
+            {% if versions %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-code-branch me-2"></i>Versiyonlar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        {% for version in versions %}
+                        <div class="col">
+                            <div class="card h-100 shadow-sm version-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ version.description|truncate_text(30) }}</h6>
+                                    <p class="card-text">
+                                        <small class="text-muted">{{ version.date|format_date }}</small>
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{{ url_for('prompt.prompt_detail', id=version.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>Görüntüle
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Sonuç Görüntüsü -->
+            {% if prompt.result_file_path %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-image me-2"></i>Sonuç
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if prompt.result_file_path|is_image %}
+                    <img src="{{ url_for('static', filename=prompt.result_file_path) }}" 
+                         class="img-fluid rounded" alt="Sonuç görseli">
+                    {% elif prompt.result_file_path|is_video %}
+                    <video controls class="img-fluid rounded">
+                        <source src="{{ url_for('static', filename=prompt.result_file_path) }}" type="video/mp4">
+                        Tarayıcınız video elementini desteklemiyor.
+                    </video>
+                    {% elif prompt.result_file_path|is_audio %}
+                    <audio controls class="w-100">
+                        <source src="{{ url_for('static', filename=prompt.result_file_path) }}" type="audio/mpeg">
+                        Tarayıcınız audio elementini desteklemiyor.
+                    </audio>
+                    {% else %}
+                    <p class="card-text">Dosya türü önizleme için uygun değil.</p>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('static', filename=prompt.result_file_path) }}" 
+                           class="btn btn-outline-primary" download>
+                            <i class="fas fa-download me-1"></i>İndir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Benzer Promptlar -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>Benzer Promptlar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- AJAX ile yüklenecek -->
+                    <div id="similar-prompts">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Silme Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Promptu Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bu promptu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form action="{{ url_for('prompt.prompt_delete', id=prompt.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger">Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Panoya kopyalama fonksiyonu
+    function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        // Kopyalandı bildirimi
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success position-fixed bottom-0 end-0 m-3';
+        notification.innerHTML = '<i class="fas fa-check-circle me-2"></i>Prompt panoya kopyalandı!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+    }
+    
+    // Sayfa yüklendiğinde benzer promptları getir
+    document.addEventListener('DOMContentLoaded', function() {
+        // Benzer promptları getir
+        fetch('/api/prompts?from_type={{ prompt.from_type }}&to_type={{ prompt.to_type }}&generator_ai={{ prompt.generator_ai }}')
+        .then(response => response.json())
+        .then(data => {
+            const similarPromptsContainer = document.getElementById('similar-prompts');
+            
+            // İçeriği temizle
+            similarPromptsContainer.innerHTML = '';
+            
+            // En fazla 5 benzer prompt göster
+            const similarPrompts = data.prompts
+                .filter(p => p.id !== {{ prompt.id }})
+                .slice(0, 5);
+            
+            if (similarPrompts.length > 0) {
+                const ul = document.createElement('ul');
+                ul.className = 'list-group list-group-flush';
+                
+                similarPrompts.forEach(prompt => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `
+                        <a href="/prompts/${prompt.id}" class="text-decoration-none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${prompt.description}</span>
+                                <span class="badge bg-primary">${prompt.from_type} → ${prompt.to_type}</span>
+                            </div>
+                        </a>
+                    `;
+                    ul.appendChild(li);
+                });
+                
+                similarPromptsContainer.appendChild(ul);
+            } else {
+                similarPromptsContainer.innerHTML = '<p class="text-muted">Benzer prompt bulunamadı.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('similar-prompts').innerHTML = '<p class="text-danger">Benzer promptlar yüklenirken bir hata oluştu.</p>';
+        });
+    });
+</script>
+{% endblock %}

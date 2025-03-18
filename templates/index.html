@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Prompt Arşivi - Ana Sayfa{% endblock %}
+
+{% block content %}
+<div class="row align-items-center my-5">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold text-primary">Prompt Arşivi</h1>
+        <p class="lead my-4">
+            Yapay zeka dönüşüm araçları için kapsamlı bir prompt arşivi ve test platformu. 
+            Text2text, text2image, image2video ve daha fazlası için promptları kolayca yönetin, 
+            filtreleme yapın ve verimlilikle çalışın.
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{{ url_for('prompt.prompt_list') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                <i class="fas fa-list me-2"></i>Promptları Keşfet
+            </a>
+            <a href="{{ url_for('prompt.prompt_new') }}" class="btn btn-outline-primary btn-lg px-4">
+                <i class="fas fa-plus me-2"></i>Yeni Prompt Ekle
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6 d-none d-lg-block">
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='images/ai-illustration.svg') }}" 
+                 alt="AI Illustration" class="img-fluid" style="max-height: 400px;">
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row g-4 my-5">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-archive fa-3x text-primary mb-3"></i>
+                <h3 class="card-title">Prompt Arşivi</h3>
+                <p class="card-text">
+                    Tüm promptlarınızı organize edin, kategorize edin ve kolayca erişin.
+                    Etiketler, filtreleme ve arama özellikleriyle ihtiyacınız olan promptu hızlıca bulun.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                <h3 class="card-title">Performans Takibi</h3>
+                <p class="card-text">
+                    Promptların başarı puanlarını takip edin. Hangi promptların daha iyi sonuç verdiğini
+                    analiz edin ve AI performansını değerlendirin.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-lightbulb fa-3x text-primary mb-3"></i>
+                <h3 class="card-title">Prompt Önerileri</h3>
+                <p class="card-text">
+                    Yeni promptlar oluşturmak için mevcut başarılı promptlardan ilham alın.
+                    Otomatik prompt önerisi özelliği ile yaratıcılığınızı artırın.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row my-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="fw-bold">Desteklenen Dönüşüm Türleri</h2>
+        <p class="lead">Çeşitli yapay zeka dönüşüm araçlarını test edin ve promptlarınızı kaydedin.</p>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-font fa-2x text-primary mb-3"></i>
+                <h5 class="card-title">Text2Audio</h5>
+                <p class="card-text">Metinden ses oluşturma promptları</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row my-5">
+    <div class="col-md-6">
+        <h2 class="fw-bold">Prompt Geliştirme İpuçları</h2>
+        <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong>Netlik:</strong> AI'ın ne yapmasını istediğinizi açıkça belirtin
+            </li>
+            <li class="list-group-item">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong>Detaylandırma:</strong> İstediğiniz stil, ton ve diğer özellikleri açıklayın
+            </li>
+            <li class="list-group-item">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong>Format:</strong> Çıktının formatını ve yapısını belirtin
+            </li>
+            <li class="list-group-item">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong>Örnekler:</strong> AI'a örnek göstererek daha iyi sonuçlar alın
+            </li>
+            <li class="list-group-item">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong>İterasyon:</strong> Sonuçları değerlendirip promptu iyileştirin
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <h2 class="fw-bold">Başlayın</h2>
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">Hızlı Başlangıç</h5>
+                <ol class="mb-0">
+                    <li class="mb-2">
+                        <a href="{{ url_for('prompt.prompt_new') }}">Yeni bir prompt ekleyin</a> veya 
+                        <a href="{{ url_for('prompt.prompt_list') }}">mevcut promptlara göz atın</a>
+                    </li>
+                    <li class="mb-2">
+                        Promptlarınızı etiketleyin ve kategorize edin
+                    </li>
+                    <li class="mb-2">
+                        Prompt sonuçlarını yükleyin ve puanlayın
+                    </li>
+                    <li class="mb-2">
+                        Başarılı promptlarınızı yeni versiyonlarla geliştirin
+                    </li>
+                    <li>
+                        <a href="{{ url_for('prompt.statistics') }}">İstatistikleri</a> kullanarak performansı analiz edin
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+card-title">Text2Image</h5>
+                <p class="card-text">Metinden görsel oluşturma promptları</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-video fa-2x text-primary mb-3"></i>
+                <h5 class="card-title">Text2Video</h5>
+                <p class="card-text">Metinden video oluşturma promptları</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-volume-up fa-2x text-primary mb-3"></i>
+                <h5 class="card-title">Text2Text</h5>
+                <p class="card-text">Metinden metne dönüşümler için promptlar</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-image fa-2x text-primary mb-3"></i>
+                <h5 class="

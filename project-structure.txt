@@ -1,0 +1,31 @@
+prompt_archive/
+│
+├── app.py              # Ana Flask uygulaması
+├── config.py           # Konfigürasyon ayarları
+├── models.py           # Veritabanı modelleri
+├── routes/             # Route'lar için modüler yapı
+│   ├── __init__.py
+│   ├── prompt_routes.py
+│   └── api_routes.py
+│
+├── static/             # Statik dosyalar (CSS, JS, vb.)
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── main.js
+│   └── images/
+│
+├── templates/          # HTML şablonları
+│   ├── base.html
+│   ├── index.html
+│   ├── prompt_list.html
+│   ├── prompt_detail.html
+│   ├── prompt_form.html
+│   └── statistics.html
+│
+├── utils/              # Yardımcı fonksiyonlar
+│   ├── __init__.py
+│   └── helpers.py
+│
+├── requirements.txt    # Bağımlılıklar
+└── README.md           # Proje dokümantasyonu
