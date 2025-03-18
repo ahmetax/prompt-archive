@@ -19,7 +19,7 @@ class Config:
     
     # Dosya yükleme ayarları
     UPLOAD_FOLDER = os.path.join(BASEDIR, 'static', 'uploads')
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp3', 'mp4', 'wav'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp3', 'mp4', 'wav', 'webp'}
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
     
     # Sayfalama ayarları
